@@ -6,6 +6,9 @@ import re
 
 
 class Vote(DeclarativeBase, BaseQuery):
+    """
+    Class that models the vote table
+    """
 
     __tablename__ = 'votes'
 
@@ -17,53 +20,28 @@ class Vote(DeclarativeBase, BaseQuery):
     def __repr__(self):
         return "<Vote(votes='%s')>" % self.votes
 
-    # def __add__(self, other): completamente sbagliato
-    #     votes = []
-    #
-    #     re.search()
-    #     self_votes = {x[1:]: x[0] for x in self.votes.split(',') if len(x) > 0}
-    #     other_votes = {x[1:]:  x[0] for x in other.votes.split(',') if len(x) > 0}
-    #
-    #     votes += [
-    #                  "+%s" % vote
-    #                  for vote, operation in self_votes.iteritems()
-    #                  if operation == '+' and not other_votes.get(vote, False) or
-    #                  operation == '+' and other_votes[vote] == '+'
-    #                  ] + [
-    #                  "+%s" % vote
-    #                  for vote, operation in other_votes.iteritems()
-    #                  if operation == '+' and not self_votes.get(vote, False)
-    #                  ] + [
-    #                  "-%s" % vote
-    #                  for vote, operation in self_votes.iteritems()
-    #                  if operation == '-' and not other_votes.get(vote, False) or
-    #                  operation == '-' and other_votes[vote] == '-'
-    #                  ] + [
-    #                  "-%s" % vote
-    #                  for vote, operation in other_votes.iteritems()
-    #                  if operation == '-' and not self_votes.get(vote, False)
-    #                  ]
-    #     v = Vote()
-    #     v.votes = ','.join(votes)
-    #     return v
-
     @property
     def account(self):
+        """
+        get account
+        :return:
+        """
         return self.transaction.senderId
 
     def has_delegate(self, delegate):
+        """
+        get if has delegate
+        :param delegate:
+        :return:
+        """
         p = re.compile(ur'([-,+])%s' % delegate)
         return re.search(p, self.votes)
 
     def get_operator_for_delegate(self, delegate):
+        """
+        get operetor of vote operation on delegate
+        :param delegate:
+        :return:
+        """
         m = re.search(delegate, self.votes)
         return m.group(0)
-    #
-    # @classmethod
-    # def votes_in_blocks(cls, blocks):
-    #     v = Vote()
-    #     v.votes = ''
-    #     return reduce(lambda x, y: x + y, [block.votes() for block in blocks], v)
-
-
-

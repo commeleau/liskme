@@ -2,7 +2,9 @@ from liskitme.model import DBSession
 
 
 class BaseQuery:
-
+    """
+    I hate to use session manually...
+    """
     def __init__(self):
         pass
 
