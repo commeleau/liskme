@@ -1,23 +1,47 @@
 from liskitme.model import init_model
 from sqlalchemy import create_engine
 
-from liskitme.model.chain import Block
+from liskitme.model.chain import Vote, Transaction
+from ming import schema as s
+from ming import create_datastore, configure
+from ming.schema import FancySchemaItem
+from ming.odm import ThreadLocalODMSession
+
+from ming.odm import MappedClass
+from ming.odm import FieldProperty, ForeignIdProperty
+
+# configure(**{'ming.mysession.uri': 'mongodb://localhost:27017/tutorial'})
+# bind = create_datastore('tutorial')
+# session = ThreadLocalODMSession.by_name('mysession')
 
 
-class Segment:
+class Segment(MappedClass):
     """
-    Class made to handle the blocks in every delegate round
+    Class made to handle the blocks in every delegate round and stores it in database
     """
+
+
+    # class __mongometa__:
+    #     session = session
+    #     name = 'wiki_page'
+    #
+    # _id = FieldProperty(s.ObjectId)
+    # round = FieldProperty(s.Int)
+    # start = FieldProperty(s.Int)
+    # end = FieldProperty(s.Int)
+    # accounts = FieldProperty(s.Array(s.Object))
+
 
     # engine and delegate are temporarily hard coded TODO: remove them and place in config
-    engine = create_engine('sqlite:///blockchain.db', echo=True)
-    delegate = "10310263204519541551L"
+    engine = create_engine('sqlite:///blockchain-last.db', echo=True)
+    delegate = "e0f1c6cca365cd61bbb01cfb454828a698fa4b7170e85a597dde510567f9dda5"
+
 
     # private variables for caching and storing of transactions
     __transactions = []
     __cached = False
 
-    def __init__(self, start=-1, end=-1, voters=None):
+    def __init__(self, end=-1):
         """
         Init with starting and ending block
         voters parameter should be the dictionary of the voters of the precedent round
@@ -26,18 +50,15 @@ class Segment:
         :param voters:
         """
 
+        super(Segment, self).__init__()
+
         # TODO: remove inizialisation of DB
         init_model(self.engine)
 
         # Get blocks in Segment and set start and end blocks
-        self.__blocks = Block.blocks_from_x_to_y(start, end)
-        self.start = self.__blocks[0]
-        self.end = self.__blocks[-1]
+        self.end = end
         # Init voters dictionary
-        try:
-            self.__voters = {x: Account(x, self) for x in voters.keys()}
-        except AttributeError:
-            self.__voters = {}
+        self.__voters = {}
 
     @property
     def transactions(self):
@@ -65,7 +86,8 @@ class Segment:
         get the votes for the segment
         :return:
         """
-        return reduce(lambda x, y: x + y.get_votes_for(self.delegate), self.__blocks, [])
+        # return reduce(lambda x, y: x + y.get_votes_for(self.delegate), self.__blocks, [])
+        return Vote.get_votes_for_delegate_before_block(self.delegate, self.end)
 
     def add(self, vote):
         """
@@ -73,10 +95,20 @@ class Segment:
         :param vote:
         :return:
         """
-        if vote.account in self.__voters.has_key:
+        if vote.account in self.__voters:
             self.__voters[vote.account].vote(vote)
         else:
             self.__voters[vote.account] = Account(account=vote.account, segment=self)
+
+    def start_query_amount(self):
+        q = Transaction.start_query_get_amount()
+        return Transaction.query_get_transactions_before_block(self.end, q)
+
+    def income_amount_for_account(self, account):
+        return Transaction.query_get_income_transactions_for_account(account, self.start_query_amount()).scalar()
+
+    def outcome_amount_for_account(self, account):
+        return Transaction.query_get_outcome_transactions_for_account(account, self.start_query_amount()).scalar()
 
 
 class Account:
@@ -109,7 +141,7 @@ class Account:
         :param vote:
         :return:
         """
-        operator = vote.get_operator_for(self.__segment.delegate)
+        operator = vote.get_operator_for_delegate(self.__segment.delegate)
         if operator == '-':
             self.__voting = False
         if operator == '+':
@@ -120,34 +152,24 @@ class Account:
         calculate the amount
         :return:
         """
-        # transactions = self.get_transactions()
-        for in_t in self.get_income_transactions():
-            self.__amount += in_t.amount
-        for out_t in self.get_outcome_transactions():
-            self.__amount += out_t.amount
+        self.__amount = self.get_income_amount() - self.get_outcome_amount()
         self.__cached = True
 
-    def get_transactions(self):
+    def get_income_amount(self):
         """
         get income transactions
         :return:
         """
-        return self.get_income_transactions() + self.get_outcome_transactions()
+        return self.__segment.income_amount_for_account(self.account)
 
-    def get_income_transactions(self):
-        """
-        get income transactions
-        :return:
-        """
-        return [t for t in self.__segment.transactions if t.recipientId == self.account]
-
-    def get_outcome_transactions(self):
+    def get_outcome_amount(self):
         """
         get outcome transactions
         :return:
         """
-        return [t for t in self.__segment.transactions if t.senderId == self.account]
+        return self.__segment.outcome_amount_for_account(self.account)
 
-
+    def __repr__(self):
+        return "<Account(amount='%s',voting='%s')>" % (self.amount/10000/10000, self.__voting)
 
 
