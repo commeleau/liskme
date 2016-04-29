@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: Tony Deboschère 
+  description:  Install  a simple mongodb (no replica, no auth)
+  company: www.neovia.fr
+  license: GPLv2
+  min_ansible_version: 1.9
+  platforms:
+  - name: Ubuntu
+    versions:
+    - trusty
+  categories:
+  - database
+  - database:nosql
+  - development
+dependencies: []
+  
