@@ -9,8 +9,10 @@ class BaseQuery:
         pass
 
     @classmethod
-    def query(cls):
-        return DBSession.query(cls)
+    def query(cls, *args):
+        a = [cls]
+        a += args
+        return DBSession.query(*a)
 
     @classmethod
     def all(cls):
