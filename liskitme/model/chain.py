@@ -4,7 +4,12 @@ from sqlalchemy import Column, Integer, String, BigInteger, Binary, Text, Foreig
 from sqlalchemy.orm import relation, backref
 from liskitme import base_timestamp
 import datetime
-from liskitme.model.votes import Vote
+
+from sqlalchemy.orm import relationship
+from liskitme.model import DBSession
+import re
+
+from sqlalchemy.sql.functions import func
 
 
 class Transaction(DeclarativeBase, BaseQuery):
@@ -42,6 +47,28 @@ class Transaction(DeclarativeBase, BaseQuery):
         :return: datetime
         """
         return datetime.datetime.fromtimestamp(self.timestamp + base_timestamp)
+
+    @staticmethod
+    def start_query_get_amount():
+        return DBSession.query(func.sum(Transaction.amount))
+
+    @classmethod
+    def query_get_outcome_transactions_for_account(cls, account, query=None):
+        if not query:
+            query = cls.query()
+        return query.filter(Transaction.senderId == account)
+
+    @classmethod
+    def query_get_income_transactions_for_account(cls, account, query=None):
+        if not query:
+            query = cls.query()
+        return query.filter(Transaction.recipientId == account)
+
+    @classmethod
+    def query_get_transactions_before_block(cls, block, query=None):
+        if not query:
+            query = cls.query()
+        return query.join(Block).filter(Block.height <= block)
 
     def __repr__(self):
         return "<Transaction(id='%s',datetime=%s)>" % (self.id, self.datetime)
@@ -103,3 +130,63 @@ class Block(DeclarativeBase, BaseQuery):
         if start >= 0:
             query.filter(cls.height >= start)
         return query.all()
+
+
+class Vote(DeclarativeBase, BaseQuery):
+    """
+    Class that models the vote table
+    """
+
+    __tablename__ = 'votes'
+
+    votes = Column(String)
+    transactionId = Column(String, ForeignKey('trs.id'), primary_key=True)
+
+    transaction = relationship('Transaction',lazy='joined', back_populates='vote')
+
+    def __repr__(self):
+        return "<Vote(votes='%s')>" % self.votes
+
+    @classmethod
+    def get_votes_for_delegate_before_block(cls, delegate, block):
+        query = cls.query_get_votes_for_delegate(delegate)
+        query = cls.query_get_votes_before_block(block, query)
+        return query.all()
+
+    @classmethod
+    def query_get_votes_before_block(cls, block, query=None):
+        if not query:
+            query = cls.query()
+        return query.join(Transaction).join(Block).filter(Block.height <= block)
+
+    @classmethod
+    def query_get_votes_for_delegate(cls, delegate, query=None):
+        if not query:
+            query = cls.query()
+        return query.filter(Vote.votes.like('%' + delegate + '%'))
+
+    @property
+    def account(self):
+        """
+        get account
+        :return:
+        """
+        return self.transaction.senderId
+
+    def has_delegate(self, delegate):
+        """
+        get if has delegate
+        :param delegate:
+        :return:
+        """
+        p = re.compile(ur'([-,+])%s' % delegate)
+        return re.search(p, self.votes)
+
+    def get_operator_for_delegate(self, delegate):
+        """
+        get operetor of vote operation on delegate
+        :param delegate:
+        :return:
+        """
+        m = re.search(delegate, self.votes)
+        return m.group(0)
