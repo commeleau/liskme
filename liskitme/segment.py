@@ -9,20 +9,10 @@ from ming.odm import FieldProperty
 from liskitme import session, delegate
 
 
-class Segment(MappedClass):
+class Segment():
     """
     Class made to handle the blocks in every delegate round and stores it in database
     """
-
-    class __mongometa__:
-        session = session
-        name = 'Segmenti'
-
-    _id = FieldProperty(s.ObjectId)
-    _round = FieldProperty(s.Int)
-    end = FieldProperty(s.Int)
-    # accounts = FieldProperty(s.Array)
-
     # private variables for caching and storing of transactions
     __transactions = []
     __cached = False
@@ -35,15 +25,16 @@ class Segment(MappedClass):
         :param end:
         :param voters:
         """
-        super(Segment, self).__init__()
+
         # Get blocks in Segment and set start and end blocks
         self.end = end
         # Init voters dictionary
         self.__voters = {}
 
-    @set
-    def end(self):
+    @property
+    def round(self):
         return (self.end+1)/101
+
     @property
     def voters(self):
         """
