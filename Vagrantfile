@@ -25,6 +25,7 @@ Vagrant.configure(2) do |config|
   # config.vm.network "forwarded_port", guest: 80, host: 8080
 
   config.vm.network "forwarded_port", guest: 27017, host: 27017
+  config.vm.network "forwarded_port", guest: 7000, host: 7000
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -50,7 +51,7 @@ Vagrant.configure(2) do |config|
   #   vb.gui = true
   #
   #   # Customize the amount of memory on the VM:
-        vb.memory = "1024"
+        vb.memory = "4096"
         vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
 
   end
