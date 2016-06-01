@@ -1,0 +1,38 @@
+---
+  - name: Suity Configuration for Laravel with Ansible
+    hosts: all
+    become: True
+    vars:
+      - mongodb_bind_ip: 0.0.0.0
+    roles:
+      - role: mongo-ansible-master
+
+    tasks:
+      - name: locele
+        locale_gen: name=en_US.UTF-8 state=present
+
+#      - name: Add mongo repo
+#        sudo: True
+#        apt_repository: repo='deb http://repo.mongodb.org/apt/ubuntu precise/mongodb-org/3.2 multiverse' state=present
+#      - name: install mongo
+#        sudo: True
+#        apt: update_cache=yes name=mongodb-org state=latest
+#      - name: install pymongo
+#        sudo: True
+#        pip: name=pymongo
+#      - name: Configura mongo
+#        mongodb_user: database=suity
+
+#
+#        replace: >
+#          dest=/etc/apache2/envvars
+#          regexp="^(export APACHE_RUN_(USER|GROUP)=)www-data"
+#          replace="\1vagrant"
+#          backup=yes
+#        notify: restart apache
+#      - name: Change owner of apache.lock
+#        sudo: True
+#        file: >
+#          path="/var/lock/apache2"
+#          owner=vagrant
+#          group=www-data

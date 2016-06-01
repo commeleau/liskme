@@ -1,59 +1,30 @@
 from liskitme.model import init_model
 from sqlalchemy import create_engine
-
 from liskitme.model.chain import Vote, Transaction
+
 from ming import schema as s
-from ming import create_datastore, configure
-from ming.schema import FancySchemaItem
-from ming.odm import ThreadLocalODMSession
-
 from ming.odm import MappedClass
-from ming.odm import FieldProperty, ForeignIdProperty
+from ming.odm import FieldProperty
 
-# configure(**{'ming.mysession.uri': 'mongodb://localhost:27017/tutorial'})
-# bind = create_datastore('tutorial')
-# session = ThreadLocalODMSession.by_name('mysession')
+from liskitme import session, delegate
+"""
+This Module define classes to easily extract round info from the blockchain using the sql models
+"""
 
-
-class Segment(MappedClass):
+class Segment:
     """
     Class made to handle the blocks in every delegate round and stores it in database
     """
-
-
-    # class __mongometa__:
-    #     session = session
-    #     name = 'wiki_page'
-    #
-    # _id = FieldProperty(s.ObjectId)
-    # round = FieldProperty(s.Int)
-    # start = FieldProperty(s.Int)
-    # end = FieldProperty(s.Int)
-    # accounts = FieldProperty(s.Array(s.Object))
-
-
-    # engine and delegate are temporarily hard coded TODO: remove them and place in config
-    engine = create_engine('sqlite:///blockchain-last.db', echo=True)
-    delegate = "e0f1c6cca365cd61bbb01cfb454828a698fa4b7170e85a597dde510567f9dda5"
-
-
     # private variables for caching and storing of transactions
     __transactions = []
     __cached = False
 
     def __init__(self, end=-1):
         """
-        Init with starting and ending block
+        Init a segment to a final block
         voters parameter should be the dictionary of the voters of the precedent round
-        :param start:
         :param end:
-        :param voters:
         """
-
-        super(Segment, self).__init__()
-
-        # TODO: remove inizialisation of DB
-        init_model(self.engine)
 
         # Get blocks in Segment and set start and end blocks
         self.end = end
@@ -61,14 +32,8 @@ class Segment(MappedClass):
         self.__voters = {}
 
     @property
-    def transactions(self):
-        """
-        get transactions for account statistics
-        :return:
-        """
-        if len(self.__transactions) == 0:
-            self.__transactions = reduce(lambda x, y: x + y, [b.transactions for b in self.__blocks])
-        return self.__transactions
+    def round(self):
+        return (self.end+1)/101
 
     @property
     def voters(self):
@@ -87,7 +52,7 @@ class Segment(MappedClass):
         :return:
         """
         # return reduce(lambda x, y: x + y.get_votes_for(self.delegate), self.__blocks, [])
-        return Vote.get_votes_for_delegate_before_block(self.delegate, self.end)
+        return Vote.get_votes_for_delegate_before_block(delegate, self.end)
 
     def add(self, vote):
         """
@@ -141,7 +106,7 @@ class Account:
         :param vote:
         :return:
         """
-        operator = vote.get_operator_for_delegate(self.__segment.delegate)
+        operator = vote.get_operator_for_delegate(delegate)
         if operator == '-':
             self.__voting = False
         if operator == '+':
