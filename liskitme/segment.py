@@ -9,7 +9,7 @@ from ming.odm import FieldProperty
 from liskitme import session, delegate
 
 
-class Segment():
+class Segment:
     """
     Class made to handle the blocks in every delegate round and stores it in database
     """
