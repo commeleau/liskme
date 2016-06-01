@@ -7,7 +7,9 @@ from ming.odm import MappedClass
 from ming.odm import FieldProperty
 
 from liskitme import session, delegate
-
+"""
+This Module define classes to easily extract round info from the blockchain using the sql models
+"""
 
 class Segment:
     """
@@ -19,11 +21,9 @@ class Segment:
 
     def __init__(self, end=-1):
         """
-        Init with starting and ending block
+        Init a segment to a final block
         voters parameter should be the dictionary of the voters of the precedent round
-        :param start:
         :param end:
-        :param voters:
         """
 
         # Get blocks in Segment and set start and end blocks
