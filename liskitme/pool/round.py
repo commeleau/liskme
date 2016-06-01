@@ -21,6 +21,9 @@ class Round(MappedClass):
     end = FieldProperty(s.Int)
     start = FieldProperty(s.Int)
     weight = FieldProperty(s.Int)
+
+    mined = FieldProperty(s.Int)  # TODO: the main thing missing right now
+
     timestamp = FieldProperty(s.DateTime, if_missing=datetime.now)
     voters = RelationProperty('Voter')
 

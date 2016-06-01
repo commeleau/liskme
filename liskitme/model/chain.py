@@ -105,7 +105,7 @@ class Block(DeclarativeBase, BaseQuery):
         return datetime.datetime.fromtimestamp(self.timestamp + base_timestamp)
 
     def __repr__(self):
-        return "<Block(height='%s',datetime=%s)>" % (self.height,self.datetime)
+        return "<Block(height='%s',datetime=%s)>" % (self.height, self.datetime)
 
     def get_votes_for(self, delegate):
         """
