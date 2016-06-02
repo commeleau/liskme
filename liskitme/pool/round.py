@@ -1,15 +1,10 @@
 from datetime import datetime
 from mongoengine import Document, IntField, StringField, DateTimeField, ReferenceField, ListField, FloatField, Q
 
-from session import DBSession
-
-
 class Round(Document):
     """
     Class made to handle the blocks in every delegate round and stores it in database
     """
-
-    # _id = FieldProperty(s.ObjectId)
     height = IntField()
     end = IntField()
     start = IntField()
@@ -27,13 +22,11 @@ class Round(Document):
 
 class Vote(Document):
 
-    # _id = FieldProperty(s.ObjectId)
     account = ReferenceField(Account)
     kappa = IntField()
     weight = IntField()
     amount = IntField()
     percent = FloatField()
-    # round_id = ForeignIdProperty('Round')
     round = ReferenceField(Round)
 
     def get_previous_vote(self):
