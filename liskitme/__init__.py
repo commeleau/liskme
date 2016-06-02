@@ -1,6 +1,5 @@
 from liskitme.model import init_model as init_sqlalchemy_model
-from liskitme.pool import init_model as init_ming_model
-from ming.datastore import create_datastore
+from liskitme.pool import init_model as init_mongo_model
 from sqlalchemy.engine import create_engine
 
 """
@@ -23,5 +22,5 @@ init_sqlalchemy_model(engine)
 """
 Init of mongo database
 """
-bind = create_datastore('mongodb://localhost:27017/lisk-pool')
-init_ming_model(bind)
+# bind = create_datastore('mongodb://localhost:27017/lisk-pool')
+init_mongo_model('lisk-pool')
