@@ -1,46 +1,47 @@
 from datetime import datetime
-from ming import schema as s
-from ming.odm import MappedClass
-from ming.odm import FieldProperty, ForeignIdProperty, RelationProperty
+from mongoengine import Document, IntField, StringField, DateTimeField, ReferenceField, ListField, FloatField, Q
 
-from session import DBSession
-
-
-class Round(MappedClass):
+class Round(Document):
     """
     Class made to handle the blocks in every delegate round and stores it in database
     """
+    height = IntField()
+    end = IntField()
+    start = IntField()
+    weight = IntField()
 
-    class __mongometa__:
-        session = DBSession
-        name = 'Round'
-        unique_indexes = [('_id', 'height'), ]
+    forged = IntField()  # TODO: the main thing missing right now
 
-    _id = FieldProperty(s.ObjectId)
-    height = FieldProperty(s.Int)
-    end = FieldProperty(s.Int)
-    start = FieldProperty(s.Int)
-    weight = FieldProperty(s.Int)
+    timestamp = DateTimeField(default=datetime.now)
+    votes = ListField(ReferenceField(Vote))
 
-    mined = FieldProperty(s.Int)  # TODO: the main thing missing right now
-
-    timestamp = FieldProperty(s.DateTime, if_missing=datetime.now)
-    voters = RelationProperty('Voter')
+    @classmethod
+    def highest_round(cls):
+        return cls.objects().order_by('-height').first()
 
 
-class Voter(MappedClass):
+class Vote(Document):
 
-    class __mongometa__:
-        session = DBSession
-        name = 'Voter'
-        unique_indexes = [('_id', ), ]
-        indexes = [('account', ), ]
+    account = ReferenceField(Account)
+    kappa = IntField()
+    weight = IntField()
+    amount = IntField()
+    percent = FloatField()
+    round = ReferenceField(Round)
 
-    _id = FieldProperty(s.ObjectId)
-    account = FieldProperty(s.String)
-    kappa = FieldProperty(s.Int)
-    weight = FieldProperty(s.Int)
-    amount = FieldProperty(s.Int)
-    percent = FieldProperty(s.Float)
-    round_id = ForeignIdProperty('Round')
-    round = RelationProperty('Round')
+    def get_previous_vote(self):
+        return Vote.objects(account=self.account, round__height=self.round.height)
+
+
+class Account(Document):
+
+    address = StringField()
+    votes = ListField(ReferenceField('Vote'))
+    # data about how it likes to have things
+
+    def get_number_of_votes(self, amount=-1, percent=-1):
+        return Vote.objects(account=self, amount__gte=amount, percent__gte=percent).count()
+
+    def get_number_of_excluded_votes(self, amount=-1, percent=-1):
+        return Vote.objects(Q(account=self) & (Q(amount__lt=amount) | Q(percent__lt=percent))).count()
+
