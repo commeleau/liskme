@@ -1,6 +1,6 @@
 from liskitme.model import init_model
 from sqlalchemy import create_engine
-from liskitme.model.chain import Vote, Transaction
+from liskitme.model.chain import Vote, Transaction, Block
 
 from ming import schema as s
 from ming.odm import MappedClass
@@ -25,9 +25,9 @@ class Segment:
         voters parameter should be the dictionary of the voters of the precedent round
         :param end:
         """
-
+        self.highest_block = Block.highest_block_before(end)
         # Get blocks in Segment and set start and end blocks
-        self.end = end
+        self.end = self.highest_block.height
         # Init voters dictionary
         self.__voters = {}
 
@@ -40,6 +40,7 @@ class Segment:
         """
         get voters: if not cached it will calculate them
         :return:
+        :rtype:list of Account
         """
         if not self.__cached:
             for vote in self.get_votes():
@@ -50,6 +51,7 @@ class Segment:
         """
         get the votes for the segment
         :return:
+        :rtype:list of Vote
         """
         # return reduce(lambda x, y: x + y.get_votes_for(self.delegate), self.__blocks, [])
         return Vote.get_votes_for_delegate_before_block(delegate, self.end)
@@ -63,16 +65,35 @@ class Segment:
         if vote.account in self.__voters:
             self.__voters[vote.account].vote(vote)
         else:
-            self.__voters[vote.account] = Account(account=vote.account, segment=self)
+            account = Account(account=vote.account, segment=self)
+            account.vote(vote)
+            self.__voters[vote.account] = account
 
     def start_query_amount(self):
+        """
+
+        :return:
+         :rtype:sqlalchemy.orm.query.Query
+        """
         q = Transaction.start_query_get_amount()
         return Transaction.query_get_transactions_before_block(self.end, q)
 
     def income_amount_for_account(self, account):
+        """
+
+        :param account:
+        :return:
+        :rtype:int
+        """
         return Transaction.query_get_income_transactions_for_account(account, self.start_query_amount()).scalar()
 
     def outcome_amount_for_account(self, account):
+        """
+
+        :param account:
+        :return:
+        :rtype:int
+        """
         return Transaction.query_get_outcome_transactions_for_account(account, self.start_query_amount()).scalar()
 
 
@@ -95,6 +116,7 @@ class Account:
         """
         return lisk amount if not cached it calcs it
         :return:
+        :rtype:int
         """
         if not self.__cached:
             self.__calc_amount()
@@ -124,6 +146,7 @@ class Account:
         """
         get income transactions
         :return:
+        :rtype:int
         """
         return self.__segment.income_amount_for_account(self.account)
 
@@ -131,6 +154,7 @@ class Account:
         """
         get outcome transactions
         :return:
+        :rtype:int
         """
         return self.__segment.outcome_amount_for_account(self.account)
 
