@@ -117,6 +117,11 @@ class Block(DeclarativeBase, BaseQuery):
 
     @classmethod
     def highest_block_before(cls, end=-1):
+        """
+        :param end:
+        :return block:
+        :rtype:Block
+        """
         query = cls.query().order_by(cls.height.desc())
         if end >= 0:
             query.filter(cls.height < end)
@@ -156,6 +161,15 @@ class Vote(DeclarativeBase, BaseQuery):
 
     @classmethod
     def get_votes_for_delegate_before_block(cls, delegate, block):
+        """
+
+        :param delegate:
+        :type delegate:str
+        :param block:
+        :type block:Block
+        :return:
+         :rtype:list of Vote
+        """
         query = cls.query_get_votes_for_delegate(delegate)
         query = cls.query_get_votes_before_block(block, query)
         return query.all()
