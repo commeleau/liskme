@@ -116,6 +116,18 @@ class Block(DeclarativeBase, BaseQuery):
         return [t.vote for t in self.transactions if t.vote and t.vote.has_delegate(delegate)]
 
     @classmethod
+    def highest_block_before(cls, end=-1):
+        """
+        :param end:
+        :return block:
+        :rtype:Block
+        """
+        query = cls.query().order_by(cls.height.desc())
+        if end >= 0:
+            query.filter(cls.height < end)
+        return query.first()
+
+    @classmethod
     def blocks_from_x_to_y(cls, start=-1, end=-1):
         """
         return blocks from start to end
@@ -149,6 +161,15 @@ class Vote(DeclarativeBase, BaseQuery):
 
     @classmethod
     def get_votes_for_delegate_before_block(cls, delegate, block):
+        """
+
+        :param delegate:
+        :type delegate:str
+        :param block:
+        :type block:Block
+        :return:
+         :rtype:list of Vote
+        """
         query = cls.query_get_votes_for_delegate(delegate)
         query = cls.query_get_votes_before_block(block, query)
         return query.all()
