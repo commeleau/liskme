@@ -1,15 +1,9 @@
-from liskitme.model import init_model
-from sqlalchemy import create_engine
 from liskitme.model.chain import Vote, Transaction, Block
-
-from ming import schema as s
-from ming.odm import MappedClass
-from ming.odm import FieldProperty
-
-from liskitme import session, delegate
+from liskitme import delegate
 """
 This Module define classes to easily extract round info from the blockchain using the sql models
 """
+
 
 class Segment:
     """
@@ -40,7 +34,7 @@ class Segment:
         """
         get voters: if not cached it will calculate them
         :return:
-        :rtype:list of Account
+        :rtype:list of LiskAccount
         """
         if not self.__cached:
             for vote in self.get_votes():
@@ -65,7 +59,7 @@ class Segment:
         if vote.account in self.__voters:
             self.__voters[vote.account].vote(vote)
         else:
-            account = Account(account=vote.account, segment=self)
+            account = LiskAccount(account=vote.account, segment=self)
             account.vote(vote)
             self.__voters[vote.account] = account
 
@@ -97,7 +91,7 @@ class Segment:
         return Transaction.query_get_outcome_transactions_for_account(account, self.start_query_amount()).scalar()
 
 
-class Account:
+class LiskAccount:
     """
     class that define a single account
     """
