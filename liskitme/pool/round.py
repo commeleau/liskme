@@ -1,5 +1,8 @@
 from datetime import datetime
+
+from liskitme.schedule import get_block_height_from_round_height
 from mongoengine import Document, IntField, StringField, DateTimeField, ReferenceField, ListField, FloatField, Q
+from liskitme.segment import LiskAccount
 
 class Round(Document):
     """
@@ -7,13 +10,26 @@ class Round(Document):
     """
     height = IntField()
     end = IntField()
-    start = IntField()
     weight = IntField()
 
     forged = IntField()  # TODO: the main thing missing right now
 
     timestamp = DateTimeField(default=datetime.now)
     votes = ListField(ReferenceField(Vote))
+
+    @classmethod
+    def create_from_chain(cls, height, segment):
+        """
+        :param account:
+         :type account:liskitme.segment.Segment
+        :return:
+         :rtype:Round
+        """
+        if segment.end != get_block_height_from_round_height(height):
+            raise ValueError("Segment doesn't reach round height")
+        r = Round(height=height, end=segment.end, timestamp=segment.highest_block.datetime)
+        r.save()
+        return r
 
     @classmethod
     def highest_round(cls):
@@ -38,6 +54,18 @@ class Account(Document):
     address = StringField()
     votes = ListField(ReferenceField('Vote'))
     # data about how it likes to have things
+
+    @classmethod
+    def get_or_create(cls, account):
+        """
+        :param account:
+         :type account:LiskAccount
+        :return:
+         :rtype:Account
+        """
+        return cls.objects(account=account.account)\
+            .modify(upsert=True, new=True,
+                    set__address=account.account)
 
     def get_number_of_votes(self, amount=-1, percent=-1):
         return Vote.objects(account=self, amount__gte=amount, percent__gte=percent).count()
