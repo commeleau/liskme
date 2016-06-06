@@ -63,16 +63,21 @@ def parse_segment(round_height):
     return r
 
 
-r = Round.highest_round()
+def run():
+    """
+    Runnable function that analyse the blockchain
+    :return:
+    """
+    r = Round.highest_round()
 
-if r is None:
-    h = 1
-else:
-    h = r.height
+    if r is None:
+        h = 1
+    else:
+        h = r.height
 
-while True:
-    try:
-        parse_segment(h+101)
-    except ValueError:
-        break
+    while True:
+        try:
+            parse_segment(h+101)
+        except ValueError:
+            break
 
