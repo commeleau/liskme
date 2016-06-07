@@ -1,14 +1,13 @@
-from liskitme.model import DeclarativeBase
-from liskitme.model.helpers import BaseQuery
-from sqlalchemy import Column, Integer, String, BigInteger, Binary, Text, ForeignKey
-from sqlalchemy.orm import relation, backref
-from liskitme import base_timestamp
 import datetime
 
-from sqlalchemy.orm import relationship
-from liskitme.model import DBSession
 import re
-
+from liskitme import BaseQuery
+from liskitme import DBSession
+from liskitme import DeclarativeBase
+from liskitme import base_timestamp
+from sqlalchemy import Column, Integer, String, BigInteger, Binary, Text, ForeignKey
+from sqlalchemy.orm import relation, backref
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import func
 
 

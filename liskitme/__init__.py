@@ -1,26 +1,20 @@
-from liskitme.model import init_model as init_sqlalchemy_model
-from liskitme.pool import init_model as init_mongo_model
-from sqlalchemy.engine import create_engine
+import os
 
-"""
-first timestamp
-"""
-base_timestamp = 1428544800
+try:
+    # >3.2
+    from configparser import ConfigParser
+except ImportError:
+    # python27
+    # Refer to the older SafeConfigParser as ConfigParser
+    from ConfigParser import SafeConfigParser as ConfigParser
 
-"""
-Our delegate
-"""
-delegate = "e0f1c6cca365cd61bbb01cfb454828a698fa4b7170e85a597dde510567f9dda5"
+config = ConfigParser()
 
-"""
-Init of sql database PostGres Soon
-"""
-# engine and delegate are temporarily hard coded TODO: remove them and place in config
-engine = create_engine('sqlite:///blockchain-last.db', echo=True)
-init_sqlalchemy_model(engine)
+# get the path to config.ini
+config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini')
 
-"""
-Init of mongo database
-"""
-# bind = create_datastore('mongodb://localhost:27017/lisk-pool')
-init_mongo_model('lisk-pool')
+# check if the path is to a valid file
+if not os.path.isfile(config_path):
+    raise IOError  # not a standard python exception
+
+config.read(config_path)

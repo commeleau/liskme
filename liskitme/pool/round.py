@@ -1,8 +1,7 @@
 from datetime import datetime
 
-from liskitme.schedule import get_block_height_from_round_height
+from liskitme import get_block_height_from_round_height
 from mongoengine import Document, IntField, StringField, DateTimeField, ReferenceField, ListField, FloatField, Q
-from liskitme.segment import LiskAccount
 
 class Round(Document):
     """

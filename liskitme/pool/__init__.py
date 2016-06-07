@@ -1,4 +1,4 @@
-from session import mainsession, DBSession
+
 from mongoengine import connect
 
 

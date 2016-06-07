@@ -19,7 +19,7 @@ go next segment
 
 """
 from liskitme.pool.round import Account, Round, Vote
-from liskitme.segment import Segment
+from liskitme.schedule.segment import Segment
 
 
 def get_block_height_from_round_height(round_height):
