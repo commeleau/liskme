@@ -1,5 +1,5 @@
 from liskitme.model.chain import Vote, Transaction, Block
-from liskitme import delegate
+from liskitme.schedule import delegate
 """
 This Module define classes to easily extract round info from the blockchain using the sql models
 """
@@ -98,7 +98,7 @@ class LiskAccount:
 
     __amount = 0
     __cached = False
-    __voting = True
+    voting = True
 
     def __init__(self, account, segment):
         # TODO: add validation on account
@@ -124,9 +124,9 @@ class LiskAccount:
         """
         operator = vote.get_operator_for_delegate(delegate)
         if operator == '-':
-            self.__voting = False
+            self.voting = False
         if operator == '+':
-            self.__voting = True
+            self.voting = True
 
     def __calc_amount(self):
         """
@@ -153,6 +153,6 @@ class LiskAccount:
         return self.__segment.outcome_amount_for_account(self.account)
 
     def __repr__(self):
-        return "<Account(amount='%s',voting='%s')>" % (self.amount/10000/10000, self.__voting)
+        return "<Account(amount='%s',voting='%s')>" % (self.amount/10000/10000, self.voting)
 
 

@@ -32,34 +32,63 @@ def calc_kappa(n):
     Now simple version number of votes plus one
     :param n:
     :return:
+    :rtype: int
     """
     return n + 1
 
 
+def calc_kappa_from_account(account):
+    """
+    Calculate the kappa.
+    Now simple version is just a wrapper for calc_kappe with account number of votes
+    :param account:
+    :type account:Account
+    :return:
+    :rtype: int
+    """
+    return calc_kappa(account.get_number_of_votes())
+
+
 def parse_segment(round_height):
-
+    """
+    Implementation of the blockchain parsing
+    :param round_height: the round height that we have to parse
+    :return:
+    :rtype:Round
+    """
+    # get the segment for the asked round_height
     segment = Segment(get_block_height_from_round_height(round_height))
+    # creation of the round
+    r = Round.create_from_chain(height=round_height, segment=segment)
 
-    r = Round(height=round_height, segment=segment)
+    # assigning base weight and save
     r.weight = 0
     r.save()
+    # getting the voters
     voters = segment.voters
+    # for each vote in voters gets or create the Account from mongo
     for vote in voters:
         account = Account.get_or_create(vote.account)
+        # Calculates kappa
+        kappa = calc_kappa_from_account(account)
+        # Create the vote and save it
         v = Vote(account=account,
                  amount=vote.account.amount, round=r,
-                 kappa=account.get_number_of_votes(),
-                 weight=account.get_number_of_votes()*vote.account.amount
+                 kappa=kappa,
+                 weight=kappa*vote.account.amount,
+                 voted=vote.voting
                  )
-        r.weight += v.weight
         v.save()
-
+        # increments the round weight
+        r.weight += v.weight
+    # eventually save the round with updated round weight
     r.save()
 
+    # pare again votes in order to calculate percentage of the vote in round
     for v in r.votes:
         v.percent = v.weight/r.weight*100
         v.save()
-
+    # end. we return round for better use of function
     return r
 
 
@@ -68,16 +97,21 @@ def run():
     Runnable function that analyse the blockchain
     :return:
     """
+    # Gets the highest round in the database
     r = Round.highest_round()
 
+    # sets height
     if r is None:
         h = 1
     else:
         h = r.height
 
+    # starts looping
     while True:
         try:
             parse_segment(h+101)
         except ValueError:
+            # These exception is throw generally if the block is not yet at the end of asked segment.
+            # Or the blockchain is not sincronized or it's too early
             break
 
