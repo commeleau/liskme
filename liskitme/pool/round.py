@@ -72,9 +72,9 @@ class Account(Document):
             .modify(upsert=True, new=True,
                     set__address=account.account)
 
-    def get_number_of_votes(self, amount=-1, percent=-1):
-        return Vote.objects(account=self, amount__gte=amount, percent__gte=percent).count()
+    def get_number_of_votes(self, amount=-1, percent=-1, voted=True):
+        return Vote.objects(account=self, amount__gte=amount, percent__gte=percent, vote=voted).count()
 
-    def get_number_of_excluded_votes(self, amount=-1, percent=-1):
-        return Vote.objects(Q(account=self) & (Q(amount__lt=amount) | Q(percent__lt=percent))).count()
+    def get_number_of_excluded_votes(self, amount=-1, percent=-1, voted=True):
+        return Vote.objects(Q(account=self) & (Q(amount__lt=amount) | Q(percent__lt=percent)) & Q(voted=voted)).count()
 
