@@ -1,5 +1,5 @@
 from liskitme.model.chain import Vote, Transaction, Block
-from liskitme import delegate
+from liskitme.schedule import delegate
 """
 This Module define classes to easily extract round info from the blockchain using the sql models
 """

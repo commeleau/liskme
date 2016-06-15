@@ -1,10 +1,10 @@
 import datetime
 
 import re
-from liskitme import BaseQuery
-from liskitme import DBSession
-from liskitme import DeclarativeBase
-from liskitme import base_timestamp
+from liskitme.model.helpers import BaseQuery
+from liskitme.model import DBSession
+from liskitme.model import DeclarativeBase
+from liskitme.schedule import base_timestamp
 from sqlalchemy import Column, Integer, String, BigInteger, Binary, Text, ForeignKey
 from sqlalchemy.orm import relation, backref
 from sqlalchemy.orm import relationship

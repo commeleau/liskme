@@ -1,4 +1,4 @@
-from liskitme import DBSession
+from liskitme.model import DBSession
 
 
 class BaseQuery:
