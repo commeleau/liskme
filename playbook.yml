@@ -3,9 +3,34 @@
     hosts: all
     become: True
     vars:
+      - lisk_db: lisk_test
       - mongodb_bind_ip: 0.0.0.0
+      - postgresql_listen_addresses:
+        - '*'
+      - postgresql_databases:
+        - name: "{{ lisk_db }}"
+          owner: lisk          # optional; specify the owner of the database
+          hstore: yes         # flag to install the hstore extension on this database (yes/no)
+          uuid_ossp: yes      # flag to install the uuid-ossp extension on this database (yes/no)
+          citext: yes         # flag to install the citext extension on this database (yes/no)
+
+        # List of database extensions to be created (optional)
+      - postgresql_database_extensions:
+        - db: "{{ lisk_db }}"
+          extensions:
+            - hstore
+            - citext
+
+# List of users to be created (optional)
+      - postgresql_users:
+        - name: lisk
+          pass: lisk
+          encrypted: no       # denotes if the password is already encrypted.
+
     roles:
-      - role: mongo-ansible-master
+      - ANXS.postgresql
+      - mongo-ansible-master
+      - geerlingguy.nodejs
 
     tasks:
       - name: locele
