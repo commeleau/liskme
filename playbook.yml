@@ -1,5 +1,5 @@
 ---
-  - name: Suity Configuration for Laravel with Ansible
+  - name: Configuration for Lisk with Ansible
     hosts: all
     become: True
     vars:
