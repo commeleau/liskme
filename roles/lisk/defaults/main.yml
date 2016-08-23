@@ -1,0 +1,10 @@
+---
+# defaults file for lisk
+source_main: https://downloads.lisk.io/lisk/main/lisk-source.tar.gz
+source_test: https://downloads.lisk.io/lisk/test/lisk-source.tar.gz
+blockchain_main: https://downloads.lisk.io/lisk/main/blockchain.db.gz
+blockchain_test: https://downloads.lisk.io/lisk/main/blockchain.db.gz
+dep_packages:
+  - libpq-dev
+  - build-essential
+  - g++

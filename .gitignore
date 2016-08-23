@@ -92,3 +92,5 @@ ENV/
 
 0.1.4
 .vagrant
+
+roles/community

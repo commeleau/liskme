@@ -1,0 +1,40 @@
+---
+# tasks file for lisk
+
+#- name: Creates directory
+#  file: path=/opt/lisk-source state=directory
+
+- name: Lisk | Make sure the dependencies are installed
+  apt:
+    pkg: "{{item}}"
+    state: present
+    update_cache: yes
+    cache_valid_time: "{{apt_cache_valid_time | default (3600)}}"
+  with_items: "{{dep_packages}}"
+
+- include: setup-test.yml
+  when: env == 'test'
+
+- include: setup-main.yml
+  when: env == 'main'
+
+- name: install packages
+  npm: path=/opt/lisk-source
+  become: yes
+  become_user: vagrant
+  
+- name: "Install forever (to run Node.js app)."
+  npm: name=forever global=yes state=present
+
+- name: "Check list of Node.js apps running."
+  command: forever list
+  register: forever_list
+  changed_when: false
+  become: yes
+  become_user: vagrant
+
+- name: "Start example Node.js app."
+  command: forever start /opt/lisk-source/app.js
+  when: "forever_list.stdout.find('/opt/lisk-source/app.js') == -1"
+  become: yes
+  become_user: vagrant
