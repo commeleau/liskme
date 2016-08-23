@@ -4,12 +4,21 @@
     become: True
     vars:
       - lisk_db: lisk_test
-      - mongodb_bind_ip: 0.0.0.0
+      - nodejs_version: "4.x"
+      - nodejs_npm_global_packages:
+        - name: forever
+      #- mongodb_bind_ip: 0.0.0.0
+      - postgresql_version: 9.5
       - postgresql_listen_addresses:
         - '*'
       - postgresql_databases:
         - name: "{{ lisk_db }}"
           owner: lisk          # optional; specify the owner of the database
+          hstore: yes         # flag to install the hstore extension on this database (yes/no)
+          uuid_ossp: yes      # flag to install the uuid-ossp extension on this database (yes/no)
+          citext: yes         # flag to install the citext extension on this database (yes/no)
+        - name: vagrant
+          owner: vagrant          # optional; specify the owner of the database
           hstore: yes         # flag to install the hstore extension on this database (yes/no)
           uuid_ossp: yes      # flag to install the uuid-ossp extension on this database (yes/no)
           citext: yes         # flag to install the citext extension on this database (yes/no)
@@ -26,38 +35,21 @@
         - name: lisk
           pass: lisk
           encrypted: no       # denotes if the password is already encrypted.
+        - name: vagrant
+          pass: vagrant
+          encrypted: no
 
     roles:
       - ANXS.postgresql
-      - mongo-ansible-master
       - geerlingguy.nodejs
-
+      - lisk
     tasks:
-      - name: locele
+      - name: locale
         locale_gen: name=en_US.UTF-8 state=present
-
-#      - name: Add mongo repo
-#        sudo: True
-#        apt_repository: repo='deb http://repo.mongodb.org/apt/ubuntu precise/mongodb-org/3.2 multiverse' state=present
-#      - name: install mongo
-#        sudo: True
-#        apt: update_cache=yes name=mongodb-org state=latest
-#      - name: install pymongo
-#        sudo: True
-#        pip: name=pymongo
-#      - name: Configura mongo
-#        mongodb_user: database=suity
-
-#
-#        replace: >
-#          dest=/etc/apache2/envvars
-#          regexp="^(export APACHE_RUN_(USER|GROUP)=)www-data"
-#          replace="\1vagrant"
-#          backup=yes
-#        notify: restart apache
-#      - name: Change owner of apache.lock
-#        sudo: True
-#        file: >
-#          path="/var/lock/apache2"
-#          owner=vagrant
-#          group=www-data
+      - name: dev locale
+        action: command sudo update-locale LC_ALL=en_US.UTF-8
+      - name: set default locale
+        become: yes
+        lineinfile: dest=/etc/default/locale
+          regexp="LC_ALL"
+          line="LC_ALL=\"en_US.UTF-8\""
