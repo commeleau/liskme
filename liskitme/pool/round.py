@@ -1,7 +1,50 @@
 from datetime import datetime
 
-from liskitme.schedule.schedule import get_block_height_from_round_height
+# from liskitme.schedule.schedule import get_block_height_from_round_height
 from mongoengine import Document, IntField, StringField, DateTimeField, ReferenceField, ListField, FloatField, Q, BooleanField
+
+
+def get_block_height_from_round_height(round_height):
+    return round_height * 101 + 1
+
+
+class Account(Document):
+
+    address = StringField()
+    votes = ListField(ReferenceField('Vote'))
+    # data about how it likes to have things
+
+    @classmethod
+    def get_or_create(cls, account):
+        """
+        :param account:
+         :type account:LiskAccount
+        :return:
+         :rtype:Account
+        """
+        return cls.objects(account=account.account) \
+            .modify(upsert=True, new=True,
+                    set__address=account.account)
+
+    def get_number_of_votes(self, amount=-1, percent=-1, voted=True):
+        return Vote.objects(account=self, amount__gte=amount, percent__gte=percent, vote=voted).count()
+
+    def get_number_of_excluded_votes(self, amount=-1, percent=-1, voted=True):
+        return Vote.objects(Q(account=self) & (Q(amount__lt=amount) | Q(percent__lt=percent)) & Q(voted=voted)).count()
+
+
+class Vote(Document):
+
+    account = ReferenceField(Account)
+    kappa = IntField()
+    weight = IntField()
+    amount = IntField()
+    percent = FloatField()
+    round = ReferenceField('Round')
+    voted = BooleanField(default=False)
+
+    def get_previous_vote(self):
+        return Vote.objects(account=self.account, round__height=self.round.height)
 
 
 class Round(Document):
@@ -38,43 +81,3 @@ class Round(Document):
     @classmethod
     def highest_round(cls):
         return cls.objects().order_by('-height').first()
-
-
-class Vote(Document):
-
-    account = ReferenceField(Account)
-    kappa = IntField()
-    weight = IntField()
-    amount = IntField()
-    percent = FloatField()
-    round = ReferenceField(Round)
-    voted = BooleanField(default=False)
-
-    def get_previous_vote(self):
-        return Vote.objects(account=self.account, round__height=self.round.height)
-
-
-class Account(Document):
-
-    address = StringField()
-    votes = ListField(ReferenceField('Vote'))
-    # data about how it likes to have things
-
-    @classmethod
-    def get_or_create(cls, account):
-        """
-        :param account:
-         :type account:LiskAccount
-        :return:
-         :rtype:Account
-        """
-        return cls.objects(account=account.account) \
-            .modify(upsert=True, new=True,
-                    set__address=account.account)
-
-    def get_number_of_votes(self, amount=-1, percent=-1, voted=True):
-        return Vote.objects(account=self, amount__gte=amount, percent__gte=percent, vote=voted).count()
-
-    def get_number_of_excluded_votes(self, amount=-1, percent=-1, voted=True):
-        return Vote.objects(Q(account=self) & (Q(amount__lt=amount) | Q(percent__lt=percent)) & Q(voted=voted)).count()
-
