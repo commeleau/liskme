@@ -7,7 +7,7 @@
       - nodejs_version: "4.x"
       - nodejs_npm_global_packages:
         - name: forever
-      #- mongodb_bind_ip: 0.0.0.0
+      - mongodb_net_bindip: 0.0.0.0
       - postgresql_version: 9.5
       - postgresql_listen_addresses:
         - '*'
@@ -45,6 +45,7 @@
       - ANXS.postgresql
       - geerlingguy.nodejs
       - lisk
+      - greendayonfire.mongodb
     tasks:
       - name: locale
         locale_gen: name=en_US.UTF-8 state=present
