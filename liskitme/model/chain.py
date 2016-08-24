@@ -123,7 +123,7 @@ class Block(DeclarativeBase, BaseQuery):
         """
         query = cls.query().order_by(cls.height.desc())
         if end >= 0:
-            query.filter(cls.height < end)
+            query = query.filter(cls.height <= end)
         return query.first()
 
     @classmethod
