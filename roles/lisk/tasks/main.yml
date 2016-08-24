@@ -33,8 +33,29 @@
   become: yes
   become_user: vagrant
 
+- name: "psql privilege"
+  postgresql_privs: >
+    database={{lisk_db}}
+    privs=ALL
+    type=database
+    role=vagrant
+
+- name: "psql privilege"
+  postgresql_privs: >
+    database={{lisk_db}}
+    privs=ALL
+    type=database
+    role=lisk
+
+- name: "Import blockchain"
+  command: psql -qd lisk_test -U lisk < blockchain.db
+  args:
+    chdir: /opt/lisk-source
+
 - name: "Start example Node.js app."
-  command: forever start /opt/lisk-source/app.js
-  when: "forever_list.stdout.find('/opt/lisk-source/app.js') == -1"
+  command: forever start app.js
+  args:
+    chdir: /opt/lisk-source
+  when: "forever_list.stdout.find('app.js') == -1"
   become: yes
   become_user: vagrant
