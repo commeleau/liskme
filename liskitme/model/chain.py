@@ -137,9 +137,9 @@ class Block(DeclarativeBase, BaseQuery):
         """
         query = cls.query()
         if end >= 0:
-            query.filter(cls.height < end)
+            query = query.filter(cls.height < end)
         if start >= 0:
-            query.filter(cls.height >= start)
+            query = query.filter(cls.height >= start)
         return query.all()
 
 
