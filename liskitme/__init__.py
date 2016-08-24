@@ -1,4 +1,5 @@
 import os
+import logging
 
 try:
     # >3.2
@@ -18,3 +19,5 @@ if not os.path.isfile(config_path):
     raise IOError  # not a standard python exception
 
 config.read(config_path)
+
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)

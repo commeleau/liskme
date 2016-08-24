@@ -1,5 +1,6 @@
 from liskitme.model.chain import Vote, Transaction, Block
 from liskitme.schedule import delegate
+import logging
 """
 This Module define classes to easily extract round info from the blockchain using the sql models
 """
@@ -38,6 +39,7 @@ class Segment:
         """
         if not self.__cached:
             for vote in self.get_votes():
+                logging.debug('found vote')
                 self.add(vote)
         return self.__voters
 
