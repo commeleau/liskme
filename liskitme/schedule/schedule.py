@@ -109,7 +109,7 @@ def run():
     # starts looping
     while True:
         try:
-            parse_segment(h+101)
+            parse_segment(h)
         except ValueError:
             # These exception is throw generally if the block is not yet at the end of asked segment.
             # Or the blockchain is not sincronized or it's too early
