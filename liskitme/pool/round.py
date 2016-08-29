@@ -1,7 +1,8 @@
 from datetime import datetime
-
+import logging
 # from liskitme.schedule.schedule import get_block_height_from_round_height
 from mongoengine import Document, IntField, StringField, DateTimeField, ReferenceField, ListField, FloatField, Q, BooleanField
+from mongoengine.errors import DoesNotExist
 
 
 def get_block_height_from_round_height(round_height):
@@ -14,6 +15,12 @@ class Account(Document):
     votes = ListField(ReferenceField('Vote'))
     # data about how it likes to have things
 
+    meta = {
+        'indexes': [
+            'address'
+        ]
+    }
+
     @classmethod
     def get_or_create(cls, account):
         """
@@ -22,18 +29,29 @@ class Account(Document):
         :return:
          :rtype:Account
         """
-        return cls.objects(account=account.account) \
-            .modify(upsert=True, new=True,
-                    set__address=account.account)
+        try:
+            return cls.objects(address=account.account).get()
+        except DoesNotExist:
+            return cls(address=account.account)
+
+        # return cls.objects(address=account.account) \
+        #     .modify(upsert=True, new=True,
+        #             set__address=account.account)
 
     def get_number_of_votes(self, amount=-1, percent=-1, voted=True):
-        return Vote.objects(account=self, amount__gte=amount, percent__gte=percent, vote=voted).count()
+        return Vote.objects(account=self, amount__gte=amount, percent__gte=percent, voted=voted).count()
 
     def get_number_of_excluded_votes(self, amount=-1, percent=-1, voted=True):
         return Vote.objects(Q(account=self) & (Q(amount__lt=amount) | Q(percent__lt=percent)) & Q(voted=voted)).count()
 
 
 class Vote(Document):
+
+    meta = {
+        'indexes': [
+            'account'
+        ]
+    }
 
     account = ReferenceField(Account)
     kappa = IntField()
@@ -51,6 +69,13 @@ class Round(Document):
     """
     Class made to handle the blocks in every delegate round and stores it in database
     """
+
+    meta = {
+        'indexes': [
+            'height'
+        ]
+    }
+
     height = IntField()
     end = IntField()
     weight = IntField()
@@ -59,6 +84,7 @@ class Round(Document):
 
     timestamp = DateTimeField(default=datetime.now)
     votes = ListField(ReferenceField(Vote))
+
 
     @classmethod
     def create_from_chain(cls, height, segment):
