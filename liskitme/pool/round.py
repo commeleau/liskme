@@ -32,7 +32,9 @@ class Account(Document):
         try:
             return cls.objects(address=account.account).get()
         except DoesNotExist:
-            return cls(address=account.account)
+            acc = cls(address=account.account)
+            acc.save()
+            return acc
 
         # return cls.objects(address=account.account) \
         #     .modify(upsert=True, new=True,

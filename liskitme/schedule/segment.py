@@ -66,12 +66,12 @@ class Segment:
         :param vote:
         :return:
         """
-        if vote[0].account in self.__voters:
-            self.__voters[vote[0].account].vote(vote[0])
+        if vote[1].senderId in self.__voters:
+            self.__voters[vote[1].senderId].vote(vote[0])
         else:
-            account = LiskAccount(account=vote[0].account, amount=vote[2] - vote[3], segment=self)
+            account = LiskAccount(account=vote[1].senderId, amount=vote[2] - vote[3], segment=self)
             account.vote(vote[0])
-            self.__voters[vote[0].account] = account
+            self.__voters[vote[1].senderId] = account
 
     def start_query_amount(self):
         """
