@@ -50,7 +50,7 @@
     roles:
       - ANXS.postgresql
       - geerlingguy.nodejs
-      - lisk
+      #- lisk
       - greendayonfire.mongodb
     tasks:
       - name: locale
