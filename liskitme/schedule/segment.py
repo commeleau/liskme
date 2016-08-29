@@ -1,3 +1,5 @@
+import time
+
 from liskitme.model.chain import Vote, Transaction, Block
 from liskitme.schedule import delegate
 import logging
@@ -13,6 +15,8 @@ class Segment:
     # private variables for caching and storing of transactions
     __transactions = []
     __cached = False
+
+    __votes = []
 
     def __init__(self, end=-1):
         """
@@ -39,8 +43,8 @@ class Segment:
         """
         if not self.__cached:
             for vote in self.get_votes():
-                logging.debug('found vote')
                 self.add(vote)
+            self.__cached = True
         return self.__voters
 
     def get_votes(self):
@@ -50,7 +54,11 @@ class Segment:
         :rtype:list of Vote
         """
         # return reduce(lambda x, y: x + y.get_votes_for(self.delegate), self.__blocks, [])
-        return Vote.get_votes_for_delegate_before_block(delegate, self.end)
+        logging.debug("query votes")
+        start = time.clock()
+        self.__votes = Vote.get_votes_for_delegate_before_block(delegate, self.end)
+        logging.debug("query votes end in %f" % (time.clock() - start))
+        return self.__votes
 
     def add(self, vote):
         """
@@ -58,12 +66,12 @@ class Segment:
         :param vote:
         :return:
         """
-        if vote.account in self.__voters:
-            self.__voters[vote.account].vote(vote)
+        if vote[0].account in self.__voters:
+            self.__voters[vote[0].account].vote(vote[0])
         else:
-            account = LiskAccount(account=vote.account, segment=self)
-            account.vote(vote)
-            self.__voters[vote.account] = account
+            account = LiskAccount(account=vote[0].account, amount=vote[2] - vote[3], segment=self)
+            account.vote(vote[0])
+            self.__voters[vote[0].account] = account
 
     def start_query_amount(self):
         """
@@ -101,10 +109,13 @@ class LiskAccount:
     __amount = 0
     __cached = False
     voting = True
+    account = 0
 
-    def __init__(self, account, segment):
+    def __init__(self, account, amount, segment):
         # TODO: add validation on account
         self.account = account
+        self.__amount = amount
+        self.__cached = True
         self.__segment = segment
 
     @property
@@ -135,8 +146,10 @@ class LiskAccount:
         calculate the amount
         :return:
         """
+        logging.debug('Calcolo di amout per %s' % self.account)
         self.__amount = self.get_income_amount() - self.get_outcome_amount()
         self.__cached = True
+        logging.debug('Fine calcolo di amout per %s' % self.account)
 
     def get_income_amount(self):
         """
