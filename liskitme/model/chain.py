@@ -24,8 +24,8 @@ class Transaction(DeclarativeBase, BaseQuery):
     senderPublicKey = Column(Binary)
     senderId = Column(String)
     recipientId = Column(String)
-    senderUsername = Column(String)
-    recipientUsername = Column(String)
+    # senderUsername = Column(String)
+    # recipientUsername = Column(String)
     amount = Column(BigInteger)
     fee = Column(BigInteger)
     signature = Column(Binary)
@@ -34,7 +34,7 @@ class Transaction(DeclarativeBase, BaseQuery):
     signatures = Column(Text)
 
     # relationship with Vote setted to eager loading for performance and quick analising the segment
-    vote = relation('Vote', back_populates='transaction', lazy='joined', uselist=False)
+    vote = relation('Vote', back_populates='transaction', uselist=False)
     # relationship with Block
     blocks = relation("Block", back_populates="transactions")
 
@@ -93,7 +93,7 @@ class Block(DeclarativeBase, BaseQuery):
     blockSignature = Column(Binary)
     previousBlock = Column(Integer, ForeignKey('blocks.id'))
     following = relation("Block", uselist=False, backref=backref('previous', remote_side=[id], uselist=False))
-    transactions = relation('Transaction', back_populates='blocks', lazy='joined')
+    transactions = relation('Transaction', back_populates='blocks')
 
     @property
     def datetime(self):
@@ -123,7 +123,7 @@ class Block(DeclarativeBase, BaseQuery):
         """
         query = cls.query().order_by(cls.height.desc())
         if end >= 0:
-            query.filter(cls.height < end)
+            query = query.filter(cls.height <= end)
         return query.first()
 
     @classmethod
@@ -137,9 +137,9 @@ class Block(DeclarativeBase, BaseQuery):
         """
         query = cls.query()
         if end >= 0:
-            query.filter(cls.height < end)
+            query = query.filter(cls.height < end)
         if start >= 0:
-            query.filter(cls.height >= start)
+            query = query.filter(cls.height >= start)
         return query.all()
 
 
@@ -153,7 +153,7 @@ class Vote(DeclarativeBase, BaseQuery):
     votes = Column(String)
     transactionId = Column(String, ForeignKey('trs.id'), primary_key=True)
 
-    transaction = relationship('Transaction',lazy='joined', back_populates='vote')
+    transaction = relationship('Transaction', back_populates='vote')
 
     def __repr__(self):
         return "<Vote(votes='%s')>" % self.votes
@@ -169,8 +169,21 @@ class Vote(DeclarativeBase, BaseQuery):
         :return:
          :rtype:list of Vote
         """
-        query = cls.query_get_votes_for_delegate(delegate)
+
+        outcome = DBSession.query(
+            Transaction.senderId.label('account'),
+            func.sum(Transaction.amount).label('amount')
+        ).group_by(Transaction.senderId).subquery('outcome')
+
+        income = DBSession.query(
+            Transaction.recipientId.label('account'),
+            func.sum(Transaction.amount).label('amount')
+        ).group_by(Transaction.recipientId).subquery('income')
+
+        query = cls.query_get_votes_for_delegate(delegate, DBSession.query(Vote, Transaction, income.c.amount, outcome.c.amount))
         query = cls.query_get_votes_before_block(block, query)
+        query = query.join(income, income.c.account == Transaction.senderId).join(outcome, outcome.c.account == Transaction.senderId)
+
         return query.all()
 
     @classmethod

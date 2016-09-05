@@ -1,0 +1,15 @@
+- name: download source main
+  unarchive: src={{source_main}} dest=/opt remote_src=yes owner=vagrant group=vagrant
+  become: yes
+
+- name: download source blockchain
+  get_url: url={{blockchain_main}} dest=/opt/lisk-source remote_src=yes owner=vagrant group=vagrant
+  become: yes
+
+- name: unzip blockchain
+  command: gunzip blockchain.db.gz
+  args:
+    chdir: /opt/lisk-source
+    creates: /opt/lisk-source/blockchain.db
+  become: yes
+  become_user: vagrant

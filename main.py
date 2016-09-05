@@ -1,4 +1,4 @@
 
-from liskitme import config
+from liskitme.schedule import schedule
 
-print config.get('main', 'test_key')  # value
+schedule.run()
