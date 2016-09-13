@@ -63,7 +63,6 @@ def parse_segment(round_height):
     r = Round.create_from_chain(height=round_height, segment=segment)
     # assigning base weight and save
     r.weight = 0
-    r.save()
     # getting the voters
     logging.debug('Chiedo voters per %s' % r.height)
     start = time.clock()
@@ -90,24 +89,21 @@ def parse_segment(round_height):
                  )
         # v.save()
         votes.append(v)
-        r.votes = r.votes + [v]
         # increments the round weight
         r.weight += v.weight
 
-    if len(votes) > 0:
-        Vote.objects.insert(votes)
-
     logging.debug("end parse voters %f" % (time.clock() - start))
 
-    account.save()
     # cycle again votes in order to calculate percentage of the vote in round
-    for v in r.votes:
+    for v in votes:
         v.percent = float(float(v.weight)/float(r.weight))*100
-        v.save()
-
         logging.info("%s voted %s with %s amount. his K is %s so weight is %s corresponding to %s%%" % (v.account.address, v.voted, v.amount, v.kappa, v.weight,v.percent))
-    # eventually save the round with updated round weight
+
     r.save()
+
+    if len(votes) > 0:
+        Vote.objects.insert(votes)
+    # eventually save the round with updated round weight
     # end. we return round for better use of function
     return r
 
