@@ -1,6 +1,10 @@
 import datetime
+import logging
 
 import re
+
+from sqlalchemy.dialects import postgresql
+
 from liskitme.model.helpers import BaseQuery
 from liskitme.model import DBSession
 from liskitme.model import DeclarativeBase
@@ -172,18 +176,18 @@ class Vote(DeclarativeBase, BaseQuery):
 
         outcome = DBSession.query(
             Transaction.senderId.label('account'),
-            func.sum(Transaction.amount).label('amount')
+            func.sum(Transaction.amount).label('outcome_amount')
         ).group_by(Transaction.senderId).subquery('outcome')
 
         income = DBSession.query(
             Transaction.recipientId.label('account'),
-            func.sum(Transaction.amount).label('amount')
+            func.sum(Transaction.amount).label('income_amount')
         ).group_by(Transaction.recipientId).subquery('income')
 
-        query = cls.query_get_votes_for_delegate(delegate, DBSession.query(Vote, Transaction, income.c.amount, outcome.c.amount))
+        query = cls.query_get_votes_for_delegate(delegate, DBSession.query(Vote, Transaction, income.c.income_amount, outcome.c.outcome_amount))
         query = cls.query_get_votes_before_block(block, query)
         query = query.join(income, income.c.account == Transaction.senderId).join(outcome, outcome.c.account == Transaction.senderId)
-
+        # logging.debug(str(query.statement.compile(compile_kwargs={"literal_binds": True}, dialect=postgresql.dialect())))
         return query.all()
 
     @classmethod
@@ -221,5 +225,6 @@ class Vote(DeclarativeBase, BaseQuery):
         :param delegate:
         :return:
         """
-        m = re.search(delegate, self.votes)
-        return m.group(0)
+        p = re.compile(ur'([-,+])%s' % delegate)
+        m = p.search(self.votes)
+        return m.group(1)
