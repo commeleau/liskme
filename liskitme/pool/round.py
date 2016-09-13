@@ -46,6 +46,9 @@ class Account(Document):
     def get_number_of_excluded_votes(self, amount=-1, percent=-1, voted=True):
         return Vote.objects(Q(account=self) & (Q(amount__lt=amount) | Q(percent__lt=percent)) & Q(voted=voted)).count()
 
+    def __dict__(self):
+        return dict(address=self.address)
+
 
 class Vote(Document):
 
@@ -103,7 +106,6 @@ class Round(Document):
             # Or the blockchain is not sincronized or it's too early
             raise ValueError("Segment doesn't reach round height")
         r = Round(height=height, end=segment.end, timestamp=segment.highest_block.datetime)
-        r.save()
         return r
 
     @classmethod
