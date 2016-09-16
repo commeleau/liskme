@@ -4,6 +4,9 @@ import logging
 
 # Starting from round height * 101 + 1 create a Segment every 101 block (as 1 segment for round)
 import time
+import liskitme.model
+from mongoengine.connection import ConnectionError
+from liskitme.schedule import delegate
 
 """
 For each segment get:
@@ -77,32 +80,29 @@ def parse_segment(round_height):
     votes = []
 
     for key, lisk_account in voters.iteritems():
-        account = Account.get_or_create(lisk_account)
-        # Calculates kappa
-        kappa = calc_kappa_from_account(account)
         # Create the vote and save it
-        v = Vote(account=account,
+        v = Vote(address=lisk_account.account,
                  amount=lisk_account.amount, round=r,
-                 kappa=kappa,
-                 weight=kappa*lisk_account.amount,
                  voted=lisk_account.voting
                  )
-        # v.save()
         votes.append(v)
-        # increments the round weight
-        r.weight += v.weight
 
     logging.debug("end parse voters %f" % (time.clock() - start))
 
     # cycle again votes in order to calculate percentage of the vote in round
-    for v in votes:
-        v.percent = float(float(v.weight)/float(r.weight))*100
-        logging.info("%s voted %s with %s amount. his K is %s so weight is %s corresponding to %s%%" % (v.account.address, v.voted, v.amount, v.kappa, v.weight,v.percent))
+    # for v in votes:
+    #     v.percent = float(float(v.weight)/float(r.weight))*100
+    #     logging.info("%s voted %s with %s amount. his K is %s so weight is %s corresponding to %s%%"
+    #  % (v.account.address, v.voted, v.amount, v.kappa, v.weight,v.percent))
+    #
 
-    r.save()
+    try:
+        r.save()
 
-    if len(votes) > 0:
-        Vote.objects.insert(votes)
+        if len(votes) > 0:
+            Vote.objects.insert(votes)
+    except ConnectionError:
+        pass
     # eventually save the round with updated round weight
     # end. we return round for better use of function
     return r
@@ -115,6 +115,11 @@ def run():
     """
     # Gets the highest round in the database
     r = Round.highest_round()
+
+    print delegate
+    b = liskitme.model.chain.Vote.get_first_vote_timestamp(delegate)
+
+    print b
 
     # sets height
     if r is None:
@@ -129,7 +134,7 @@ def run():
         try:
             logging.info('parsing round %s' % h)
             r = parse_segment(h)
-            logging.info('parserd round %s with weight %s and votes %s' % (r.height, r.weight, len(r.votes)))
+            logging.info('parserd round %s of date %s' % (r.height, r.timestamp))
             h += 1
         except ValueError, err:
             # These exception is throw generally if the block is not yet at the end of asked segment.

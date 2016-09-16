@@ -9,11 +9,23 @@ def get_block_height_from_round_height(round_height):
     return round_height * 101 + 1
 
 
-class Account(Document):
+class Account():
 
-    address = StringField()
-    votes = ListField(ReferenceField('Vote'))
-    # data about how it likes to have things
+    __votes = []
+    __address = ""
+
+    def __init__(self, address):
+        self.__address = address
+
+    def get_number_of_votes(self, amount=-1, percent=-1, voted=True):
+        return Vote.objects(address=self.__address, amount__gte=amount, percent__gte=percent, voted=voted).count()
+
+    def get_number_of_excluded_votes(self, amount=-1, percent=-1, voted=True):
+        return Vote.objects(Q(address=self.__address) & (Q(amount__lt=amount) | Q(percent__lt=percent)) & Q(voted=voted)).count()
+
+
+
+class Vote(Document):
 
     meta = {
         'indexes': [
@@ -21,48 +33,11 @@ class Account(Document):
         ]
     }
 
-    @classmethod
-    def get_or_create(cls, account):
-        """
-        :param account:
-         :type account:LiskAccount
-        :return:
-         :rtype:Account
-        """
-        try:
-            return cls.objects(address=account.account).get()
-        except DoesNotExist:
-            acc = cls(address=account.account)
-            acc.save()
-            return acc
-
-        # return cls.objects(address=account.account) \
-        #     .modify(upsert=True, new=True,
-        #             set__address=account.account)
-
-    def get_number_of_votes(self, amount=-1, percent=-1, voted=True):
-        return Vote.objects(account=self, amount__gte=amount, percent__gte=percent, voted=voted).count()
-
-    def get_number_of_excluded_votes(self, amount=-1, percent=-1, voted=True):
-        return Vote.objects(Q(account=self) & (Q(amount__lt=amount) | Q(percent__lt=percent)) & Q(voted=voted)).count()
-
-    def __dict__(self):
-        return dict(address=self.address)
-
-
-class Vote(Document):
-
-    meta = {
-        'indexes': [
-            'account'
-        ]
-    }
-
-    account = ReferenceField(Account)
-    kappa = IntField()
-    weight = IntField()
+    address = StringField()
+    # kappa = IntField()
+    # weight = IntField()
     amount = IntField()
-    percent = FloatField()
+    # percent = FloatField()
     round = ReferenceField('Round')
     voted = BooleanField(default=False)
 
@@ -83,7 +58,7 @@ class Round(Document):
 
     height = IntField()
     end = IntField()
-    weight = IntField()
+    # weight = IntField()
 
     forged = IntField()  # TODO: the main thing missing right now
 

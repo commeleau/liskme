@@ -105,6 +105,7 @@ class Block(DeclarativeBase, BaseQuery):
         return the datetime shifted with base_timestamp
         :return: datetime
         """
+        logging.debug("%s + %s = %s" % (self.timestamp, base_timestamp, base_timestamp + self.timestamp))
         return datetime.datetime.fromtimestamp(self.timestamp + base_timestamp)
 
     def __repr__(self):
@@ -161,6 +162,19 @@ class Vote(DeclarativeBase, BaseQuery):
 
     def __repr__(self):
         return "<Vote(votes='%s')>" % self.votes
+
+    @classmethod
+    def get_first_vote_timestamp(cls, delegate):
+        """
+
+        :param delegate:
+        :type delegate:str
+        :return:
+        :rtype:Block
+        """
+        query = cls.query_get_votes_for_delegate(delegate)
+        # logging.debug(str(query.statement.compile(compile_kwargs={"literal_binds": True}, dialect=postgresql.dialect())))
+        return query.all()
 
     @classmethod
     def get_votes_for_delegate_before_block(cls, delegate, block):
